@@ -157,9 +157,17 @@
     where username = #{username}
   </select>
 
+  <select id="checkEmail" resultType="int" parameterType="string">
+    select count(1) from mmall_user
+    where email = #{email}
+  </select>
+
   <select id="selectLogin" resultMap="BaseResultMap" parameterType="map">
-    SELECT from mmall_user
+    SELECT
+    <include refid="Base_Column_List" />
+    from mmall_user
     where username = #{username}
     and password = #{password}
   </select>
+
 </mapper>

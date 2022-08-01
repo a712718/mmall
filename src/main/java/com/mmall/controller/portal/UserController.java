@@ -4,7 +4,6 @@ import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
-import com.mmall.service.Impl.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,10 +33,28 @@ public class UserController {
     @ResponseBody
     public ServerResponse<User> login(String username, String password, HttpSession session) {
         // service-->mybatis-->dao
+        System.out.println("session,,,,,");
+        System.out.println(session);
+        System.out.println(username);
+        System.out.println(password);
         ServerResponse<User> response = iUserService.login(username, password);
         if(response.isSuccess()){
             session.setAttribute(Const.CURRENT_USER, response.getData());
         }
         return response;
     }
+
+    @RequestMapping(value = "logout.do", method = RequestMethod.POST)
+    @ResponseBody
+    public ServerResponse<String> logout(HttpSession session){
+        session.removeAttribute(Const.CURRENT_USER);
+        return ServerResponse.createBySuccess();
+    }
+
+    @RequestMapping(value = "register.do", method = RequestMethod.POST)
+    @ResponseBody
+    public ServerResponse<String> register(User user){
+        return iUserService.register(user);
+    }
+
 }
