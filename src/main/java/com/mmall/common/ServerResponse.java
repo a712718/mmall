@@ -14,7 +14,7 @@ public class ServerResponse<T> implements Serializable {
     private String msg;
     private T data;
 
-    // 私有构造器
+    // 私有构造器  重载
     private ServerResponse(int status){
         this.status = status;
     }
@@ -46,6 +46,7 @@ public class ServerResponse<T> implements Serializable {
         return  msg;
     }
 
+    // 重载 返回ServerResponse<T>对象
     public static <T> ServerResponse<T> createBySuccess() {
         return new ServerResponse<T>(ResponseCode.SUCCESS.getCode());
     }

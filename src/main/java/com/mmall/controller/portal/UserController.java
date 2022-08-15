@@ -4,6 +4,7 @@ import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
+import org.omg.CORBA.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,6 +56,38 @@ public class UserController {
     @ResponseBody
     public ServerResponse<String> register(User user){
         return iUserService.register(user);
+    }
+
+    @RequestMapping(value = "checkValid.do", method = RequestMethod.POST)
+    @ResponseBody
+    public ServerResponse<String> checkValid(String str, String type) {
+        return iUserService.checkValid(str, type);
+    }
+
+    @RequestMapping(value = "getUserInfo.do", method = RequestMethod.POST)
+    @ResponseBody
+    public ServerResponse<User> getUserInfo(HttpSession session){
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user != null){
+            return ServerResponse.createBySuccess(user);
+        }
+        return  ServerResponse.createByErrorMessage("用户未登录，无法获取当前用户的信息");
+    }
+
+    @RequestMapping(value = "forgetGetQuestion.do", method = RequestMethod.POST)
+    @ResponseBody
+    public ServerResponse<String> forgetGetQuestion(String username) {
+        return iUserService.selectQuestion(username);
+    }
+
+    @RequestMapping(value = "getTest.do", method = RequestMethod.GET)
+    @ResponseBody
+    public String getTest(int a){
+        return "age"+a;
+    }
+
+    public static void main(String[] args) {
+
     }
 
 }
