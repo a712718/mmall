@@ -2,6 +2,7 @@ package com.mmall.service.Impl;
 
 import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
+import com.mmall.common.TokenCache;
 import com.mmall.dao.UserMapper;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
@@ -10,6 +11,8 @@ import com.sun.corba.se.spi.activation.Server;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 /**
  * Created by mahong on 2022/7/28.
@@ -21,19 +24,13 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public ServerResponse<User> login(String username, String password) {
-        System.out.println("lpppppp");
-        System.out.println(username);
-        System.out.println(password);
         int resultCount = userMapper.checkUsername(username);
-        System.out.println("resultCount");
-        System.out.println(resultCount);
         if(resultCount == 0){
             return ServerResponse.createByErrorMessage("用户不存在");
         }
         String md5Password = MD5Util.MD5EncodeUtf8(password);
+        System.out.println("login,,,,,md5Password" + MD5Util.MD5EncodeUtf8(password));
         User user = userMapper.selectLogin(username, md5Password);
-        System.out.println("selectLogin user");
-        System.out.println(user);
         if (user == null) {
             return ServerResponse.createByErrorMessage("密码错误");
         }
@@ -100,5 +97,76 @@ public class UserServiceImpl implements IUserService {
             return ServerResponse.createByErrorMessage(question);
         }
         return ServerResponse.createByErrorMessage("找回密码的问题是空的");
+    }
+
+    public ServerResponse<String> checkAnswer(String username, String question, String answer){
+        int resultCount = userMapper.checkAnswer(username, question, answer);
+        if(resultCount>0){
+            String forgetToken = UUID.randomUUID().toString();
+            TokenCache.setKey(TokenCache.TOKEN_PREFIX+username, forgetToken);
+            return ServerResponse.createBySuccess(forgetToken);
+        }
+        return ServerResponse.createByErrorMessage("问题的答案错误");
+
+    }
+
+    public ServerResponse<String> resetPassword(String passwordOld, String passwordNew, User user){
+        // 防止横向越权，校验一下这个用户的旧密码，一定要是这个用户的，因为我们会查询一个count（1），如果不指定id count（1）就有可能大于0
+        System.out.println("passwordOld :"+ passwordOld);
+        System.out.println("passwordOld encode:"+ MD5Util.MD5EncodeUtf8(passwordOld));
+        System.out.println("passwordNew :"+ passwordNew);
+        System.out.println("user:"+ user);
+        System.out.println("user.getId():"+ user.getId());
+        int resultCount = userMapper.checkPassword(MD5Util.MD5EncodeUtf8(passwordOld), user.getId());
+        if(resultCount == 0){
+            return ServerResponse.createByErrorMessage("旧密码错误");
+        }
+
+        user.setPassword(MD5Util.MD5EncodeUtf8(passwordNew)); // 修改内存中的user？
+
+        int updateCount = userMapper.updateByPrimaryKeySelective(user); // 更改数据库
+        if (updateCount > 0) {
+            return  ServerResponse.createBySuccessMessage("密码更新成功");
+        }
+        return  ServerResponse.createByErrorMessage("密码更新失败");
+    }
+
+    public ServerResponse<User> updateInformation(User user){
+        int resultCount = userMapper.checkEmailByUserId(user.getEmail(), user.getId());
+        if(resultCount>0){
+            ServerResponse.createByErrorMessage("邮箱已经存在");
+        }
+
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setEmail(user.getEmail());
+        updateUser.setPhone(user.getPhone());
+        updateUser.setQuestion(user.getQuestion());
+        updateUser.setAnswer(user.getAnswer());
+
+        int updateCount = userMapper.updateByPrimaryKeySelective(updateUser);
+        if(updateCount > 0){
+            return ServerResponse.createBySuccess("更新个人信息成功", updateUser);
+        }
+
+        return ServerResponse.createByErrorMessage("更新个人信息失败");
+    }
+
+    public ServerResponse<User> getInformation(Integer id){
+        User user = userMapper.selectByPrimaryKey(id);
+        if(user == null) {
+            return ServerResponse.createByErrorMessage("找不到当前用户");
+        }
+
+        user.setPassword(StringUtils.EMPTY);
+        return ServerResponse.createBySuccess(user);
+    }
+
+    public ServerResponse checkAdminRole(User user){
+        if(user != null && user.getRole().intValue() == Const.Role.ROLE_ADMIN) {
+            return ServerResponse.createBySuccess();
+        }
+
+        return ServerResponse.createByError();
     }
 }

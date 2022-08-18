@@ -177,4 +177,22 @@
     where username = #{username}
   </select>
 
+  <select id="checkAnswer" resultType="int" parameterType="map">
+    select Count(1) from mmall_user
+    where username = #{username}
+    and question = #{question}
+    and answer = #{answer}
+  </select>
+  
+  <select id="checkPassword" resultType="int" parameterType="map">
+    select Count(1) from mmall_user
+    where  id = #{id}
+    and password = #{password}
+  </select>
+  
+  <select id="checkEmailByUserId" resultType="int" parameterType="map">
+    select Count(1) from mmall_user
+    where id = #{id}
+    and email != #{email}
+  </select>
 </mapper>
