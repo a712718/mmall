@@ -39,7 +39,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     public ServerResponse<String> register(User user){
-         // checkValid return的内容不能直接return到register函数外，要validResponse承接一下
+         // checkValid return的内容return到register函数里，要validResponse承接一下 再return一下作为register的返回值
         ServerResponse validResponse = this.checkValid(user.getUsername(), Const.USERNAME);
         if(!validResponse.isSuccess()) {
             return validResponse;
